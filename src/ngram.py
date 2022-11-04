@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 BEGGIN_TOKEN = '<s> '
 END_TOKEN = ' </s>'
@@ -46,11 +47,12 @@ class Ngram:
 
     def _select_random_sentence():
       sentence_idx = random.choice(self.sentences_idx)
-      return self.sentences_idx.index(sentence_idx)
+      return self.sentences_idx.index(sentence_idx), sentence_idx
     
-    sentence_idx = _select_random_sentence()
+    idx_in_arr, sentence_idx = _select_random_sentence()
     sentence = sentences_arr[sentence_idx]
-    self.remove_sentence(sentence, sentence_idx)
+    #print("REMOVING SENTENCE: {} IN INDEX {}".format(sentence, sentence_idx))
+    self.remove_sentence(sentence, idx_in_arr)
     other.train(sentence, sentence_idx)
 
   def remove_sentence(self, text, text_idx):
@@ -70,3 +72,24 @@ class Ngram:
             del self.grams_arr[n_idx][sequence]
         else:
           break
+
+  def entropy(self):
+    normalizers = [sum(v.values()) for v in self.grams_arr]
+    probabilities = []
+    entropies = []
+    for idx, gram in enumerate(self.grams_arr):
+      prob_dict = dict((key, float(value)/normalizers[idx]) for key,value in gram.items())
+      probabilities.append(prob_dict)
+    
+    for prob in probabilities:
+      entropy = -sum(p*np.log2(p) for p in prob.values())
+      entropies.append(entropy)
+
+    return entropies
+  
+  def rollback_incremental_training(self, other, sentence_arr):
+    """
+    TODO: In case the entropy of the current change does not get better
+          rollback the incrementral training
+    """
+    pass
